@@ -106,12 +106,14 @@ zcat -f /var/log/remo_logs/*.jsonl* |
 
 ## How it works
 
-- **The recorder** runs in the background from the moment your Mac starts. It reads the
+- **The recorder** runs all the time, from the moment your Mac starts. It reads the
   stream of file activity that macOS gives security software (Apple's Endpoint Security,
   through `eslogger`, a tool built into macOS), keeps the 30 or so fields that matter
-  from each event, and adds them to the day's log.
-- **The check** runs every 5 minutes. It stays quiet while all is well and sends a
-  notification when that changes.
+  from each event, and adds them to the day's log. If that stream goes silent for 5
+  minutes, the recorder restarts it; if the recorder itself stops, macOS starts it again.
+- **The check** is separate from the recorder: every 5 minutes while you're logged in,
+  it looks at whether recording is working. It stays quiet while it is, and sends a
+  notification when something goes wrong.
 - **The window** shows whether RemoLog is recording. It also sets how long logs are kept,
   opens them in Terminal, fixes what it can, and uninstalls.
 
@@ -153,8 +155,9 @@ Open RemoLog from Applications and click **Uninstall…**. Your logs stay in
 
 ## If something goes wrong
 
-RemoLog checks itself every 5 minutes. It sends a notification if it stops recording,
-misses events or runs short of disk space. Open RemoLog to see what's wrong; where it
+Every 5 minutes, separately from the recorder, RemoLog checks that recording is
+working. It sends a notification if recording stops, events are missed or disk space
+runs short. Open RemoLog to see what's wrong; where it
 can, it offers to fix it.
 
 ## What it can't do
