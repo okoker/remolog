@@ -1,8 +1,33 @@
-# RemoLog
+<p align="center">
+  <img src="assets/remolog-icon.png" width="128" height="128" alt="RemoLog's icon">
+</p>
 
-**Born out of paranoia.** RemoLog keeps a record macOS doesn't: which program moved,
-renamed or deleted a file on your Mac, and who logged in or used `sudo`. When a file
-vanishes, the log says what took it.
+<h1 align="center">RemoLog</h1>
+
+<p align="center">
+  <b>Born out of paranoia.</b><br>
+  RemoLog keeps a record macOS doesn't: which program moved, renamed or deleted a file on
+  your Mac.
+</p>
+
+<p align="center">
+  <a href="https://github.com/okoker/remolog/releases/latest"><b>Download RemoLog</b></a>
+  &nbsp;·&nbsp; macOS 15 or later &nbsp;·&nbsp; Apple silicon
+</p>
+
+<p align="center">
+  <img src="assets/remolog-window.png" width="402" alt="RemoLog's window: Recording, last event a few seconds ago, with the events recorded today, the logs on disk, alerts on, and how long logs are kept">
+</p>
+
+## Why
+
+A file vanishes. Did you bin it by mistake? Did an app, a sync service or an update
+remove it? macOS can't tell you. A move to the Bin is just a rename into a hidden
+folder, and nothing on the Mac, not its system log and not the Bin itself, notes which
+program did it.
+
+RemoLog notes it. It keeps a week of your Mac's file activity, so when something goes
+missing you can look up what took it, and when.
 
 ## What it records
 
@@ -15,6 +40,39 @@ vanishes, the log says what took it.
 
 It does not record what is inside your files, files that are only opened or read, or
 anything on the network.
+
+## What a record looks like
+
+Each record is one line of JSON. Ask the log what went to the Bin, keeping four of each
+record's fields:
+
+```sh
+zcat -f /var/log/remo_logs/*.jsonl* | jq 'select(.dst? // "" | test("/\\.Trash/")) | {t, exe, src, dst}'
+```
+
+```json
+{
+  "t": "2026-11-22T14:02:11.483920Z",
+  "exe": "/System/Library/CoreServices/Finder.app/Contents/MacOS/Finder",
+  "src": "/Users/you/Documents/report.pdf",
+  "dst": "/Users/you/.Trash/report.pdf"
+}
+```
+
+Finder moved `report.pdf` from Documents to the Bin at 14:02:11 (times are UTC). The
+full record also has the account the program ran as, its process numbers, whether it is
+Apple's own, and over twenty more fields.
+
+## How it works
+
+- **The recorder** runs in the background from the moment your Mac starts. It reads the
+  stream of file activity that macOS gives security software (Apple's Endpoint Security,
+  through `eslogger`, a tool built into macOS), keeps the 30 or so fields that matter
+  from each event, and adds them to the day's log.
+- **The check** runs every 5 minutes. It stays quiet while all is well and sends a
+  notification when that changes.
+- **The window** shows whether RemoLog is recording. It also sets how long logs are kept,
+  opens them in Terminal, fixes what it can, and uninstalls.
 
 ## Requirements
 
@@ -30,8 +88,8 @@ anything on the network.
      RemoLog on.
    - **Notifications**, so it can tell you if it ever stops. Click Allow.
 
-Then it says Recording. Close the window: RemoLog keeps recording, and starts by itself
-after a restart.
+Then it says Recording, as in the picture above. Close the window: RemoLog keeps
+recording, and starts by itself after a restart.
 
 ## Update
 
@@ -48,11 +106,8 @@ Open RemoLog from Applications and click **Uninstall…**. Your logs stay in
 - One file per day (UTC) in `/var/log/remo_logs`, one JSON record per line. Finished
   days are compressed.
 - RemoLog keeps 7 days. **Keep logs for**, in its window, changes that to 14, 30 or 90.
-- **Open logs in Terminal**, in its window, opens Terminal there. For example, what went
-  to the Bin:
-  ```sh
-  zcat -f /var/log/remo_logs/*.jsonl* | jq -c 'select(.dst? // "" | test("/\\.Trash/"))'
-  ```
+- **Open logs in Terminal**, in its window, opens Terminal there, ready for a search like
+  the one in [What a record looks like](#what-a-record-looks-like).
 - Every account on this Mac can read the logs. Only RemoLog writes to them.
 
 ## If something goes wrong
